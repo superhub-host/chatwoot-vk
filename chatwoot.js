@@ -67,8 +67,8 @@ async function createChatwootConversation(contact) {
 }
 
 export async function processChatwootMessage(data) {
-    if (!data.content) {
-        console.log(`Invalid message content: ${ data.content }`)
+    if (!data.content && data.attachments.length === 0) {
+        console.log(`Invalid content for message without attachments: ${ data.content }`)
         return
     }
 
@@ -83,9 +83,31 @@ export async function processChatwootMessage(data) {
 
     const { payload: contact } = contactResponse
 
+    const attachments = []
+    if (data.attachments) {
+        for (const attachment of data.attachments) {
+            attachments.push(await processAttachment(attachment))
+        }
+    }
+
     await vk.api.messages.send({
         user_id: contact.identifier,
-        message: data.content,
+        message: data.content ?? '',
+        attachment: attachments.map(a => a.toString()).join(','),
         random_id: Math.floor(Math.random() * Math.pow(10, 100)),
     })
+}
+
+async function processAttachment(attachment) {
+    switch (attachment['file_type']) {
+        case 'image':
+             return await vk.upload.messagePhoto({
+                source: {
+                    value: attachment['data_url']
+                }
+            })
+        default:
+            console.warn(`Skipping attachment with unsupported type: ${ attachment['file_type'] }`)
+            break
+    }
 }
