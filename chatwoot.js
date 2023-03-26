@@ -67,6 +67,11 @@ async function createChatwootConversation(contact) {
 }
 
 export async function processChatwootMessage(data) {
+    if (!data.content) {
+        console.log(`Invalid message content: ${ data.content }`)
+        return
+    }
+
     const conversation = data['conversation']
     const contactInbox = conversation['contact_inbox']
     const { data: contactResponse } = await chatwoot.contacts(chatwootAccountId).show(contactInbox.contact_id)
