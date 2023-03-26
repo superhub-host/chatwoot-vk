@@ -1,0 +1,16 @@
+{
+  "name": "chatwoot-vk",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/superhub-host/chatwoot-vk",
+  "author": "RuscalWorld",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@chatwoot/node": "https://github.com/chatwoot/node",
+    "vk-io": "^4.8.1"
+  }
+}
