@@ -1,5 +1,7 @@
 import ChatwootClient from '@chatwoot/node'
-import { vk } from './vk.js'
+import { processVkAttachment, vk } from './vk.js'
+import axios from 'axios'
+import FormData from 'form-data'
 
 export const chatwootAccountId = Number(process.env.CHATWOOT_ACCOUNT_ID)
 export const chatwootInboxId = Number(process.env.CHATWOOT_INBOX_ID)
@@ -86,7 +88,7 @@ export async function processChatwootMessage(data) {
     const attachments = []
     if (data.attachments) {
         for (const attachment of data.attachments) {
-            attachments.push(await processAttachment(attachment))
+            attachments.push(await processVkAttachment(attachment))
         }
     }
 
@@ -98,16 +100,31 @@ export async function processChatwootMessage(data) {
     })
 }
 
-async function processAttachment(attachment) {
-    switch (attachment['file_type']) {
-        case 'image':
-             return await vk.upload.messagePhoto({
-                source: {
-                    value: attachment['data_url']
-                }
+export async function sendMessage(conversationId, params, files = []) {
+    if (!files) return await chatwoot.conversations(chatwootAccountId).sendMessage(conversationId, params)
+    const form = new FormData()
+    form.append('content', params.content ?? '')
+    form.append('message_type', params.message_type)
+    files.forEach(file => form.append('attachments[]', file))
+
+    // noinspection JSCheckFunctionSignatures
+    return await chatwoot.client.post(
+        `${ chatwoot.conversations(chatwootAccountId).path }/${ conversationId }/messages`, form,
+        { headers: { ...form.getHeaders() }}
+    )
+}
+
+export async function processChatwootAttachment(attachment) {
+    switch (attachment.type) {
+        case 'photo':
+            const photo = attachment.photo
+            const sizes = photo.sizes.sort((a, b) => (b.width + b.height) - (a.width + a.height))
+            const response = await axios.get(sizes[0].url, {
+                responseType: 'stream'
             })
+            return response.data
         default:
-            console.warn(`Skipping attachment with unsupported type: ${ attachment['file_type'] }`)
+            console.warn(`Skipping attachment with unsupported type: ${ attachment.type }`)
             break
     }
 }
