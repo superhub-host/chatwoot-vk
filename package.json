@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@chatwoot/node": "https://github.com/chatwoot/node",
+    "express": "^4.18.2",
     "vk-io": "^4.8.1"
   }
 }

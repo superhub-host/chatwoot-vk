@@ -1,17 +1,17 @@
 import ChatwootClient from '@chatwoot/node'
 import { vk } from './vk.js'
 
-const chatwootAccountId = Number(process.env.CHATWOOT_ACCOUNT_ID)
-const chatwootInboxId = Number(process.env.CHATWOOT_INBOX_ID)
+export const chatwootAccountId = Number(process.env.CHATWOOT_ACCOUNT_ID)
+export const chatwootInboxId = Number(process.env.CHATWOOT_INBOX_ID)
 
-const chatwoot = new ChatwootClient({
+export const chatwoot = new ChatwootClient({
     config: {
         host: process.env.CHATWOOT_HOST,
         apiAccessToken: process.env.CHATWOOT_ACCESS_TOKEN,
     },
 })
 
-async function getOrCreateChatwootContact(userId) {
+export async function getOrCreateChatwootContact(userId) {
     const contact = await findChatwootContact(userId)
     if (!contact) return await createChatwootContact(userId)
     return contact
@@ -45,7 +45,7 @@ async function createChatwootContact(externalId) {
     return data.payload['contact']
 }
 
-async function getOrCreateChatwootConversation(contact) {
+export async function getOrCreateChatwootConversation(contact) {
     const conversation = await findChatwootConversation(contact)
     if (!conversation) return await createChatwootConversation(contact)
     return conversation
@@ -66,15 +66,21 @@ async function createChatwootConversation(contact) {
     return data
 }
 
-export async function processVkMessage(message) {
-    const externalId = message.from_id
-    const contact = await getOrCreateChatwootContact(externalId)
-    const conversation = await getOrCreateChatwootConversation(contact)
+export async function processChatwootMessage(data) {
+    const conversation = data['conversation']
+    const contactInbox = conversation['contact_inbox']
+    const { data: contactResponse } = await chatwoot.contacts(chatwootAccountId).show(contactInbox.contact_id)
 
-    const { data } = await chatwoot.conversations(chatwootAccountId).sendMessage(conversation.id, {
-        content: message.text,
-        message_type: 'incoming',
+    if (!contactResponse.payload) {
+        console.log(`Unable to fetch contact for conversation ${ conversation.id }`)
+        return
+    }
+
+    const { payload: contact } = contactResponse
+
+    await vk.api.messages.send({
+        user_id: contact.identifier,
+        message: data.content,
+        random_id: Math.floor(Math.random() * Math.pow(10, 100)),
     })
-
-    return data
 }
