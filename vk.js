@@ -1,5 +1,6 @@
 import { VK } from 'vk-io'
 import {
+    chatwoot, chatwootAccountId,
     getOrCreateChatwootContact,
     getOrCreateChatwootConversation,
     processChatwootAttachment,
@@ -41,4 +42,10 @@ export async function processVkAttachment(attachment) {
             console.warn(`Skipping attachment with unsupported type: ${ attachment['file_type'] }`)
             break
     }
+}
+
+export async function processVkTypingState(userId, state) {
+    const contact = await getOrCreateChatwootContact(userId)
+    const conversation = await getOrCreateChatwootConversation(contact)
+    await chatwoot.conversations(chatwootAccountId).toggleTyping(conversation.id, state ? 'on' : 'off')
 }
