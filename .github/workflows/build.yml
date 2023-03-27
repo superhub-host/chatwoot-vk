@@ -18,15 +18,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install dependencies with NPM
-        run: npm ci
-
-      - name: Build with Webpack
-        run: npm run build
+      - name: Install dependencies with Yarn
+        run: yarn
 
       - name: Login to Docker registry
         uses: docker/login-action@v1
         with:
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -35,7 +33,7 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           tags: type=sha
-          images: ghcr.io/superhub-host/vk-chatwoot
+          images: ghcr.io/superhub-host/chatwoot-vk
 
       - name: Build and push Docker image
         id: build-and-push
