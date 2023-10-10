@@ -5,7 +5,7 @@ import * as Sentry from '@sentry/node'
 import '@sentry/tracing'
 
 Sentry.init({
-    dsn: 'https://77b8113ccbb24b07856e54d880da4f96@sentry.superhub.xyz/10',
+    dsn: process.env.SENTRY_DSN,
     tracesSampleRate: 1.0,
 })
 
